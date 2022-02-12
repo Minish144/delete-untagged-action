@@ -19,5 +19,5 @@ inputs:
     description: The owner and repository name. For example, 'Codertocat/Hello-World'.
     required: false
 runs:
-  using: node16
-  main: main.js
+  using: node12
+  main: dist/index.js

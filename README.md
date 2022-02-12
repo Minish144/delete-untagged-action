@@ -5,7 +5,7 @@ Deletes all untagged image versions from the [GitHub Packages][github-packages] 
 ## Usage
 
 ```yaml
-uses: minish144/delete-untagged-action@master
+uses: minish144/delete-untagged-action@v2
 with:
   github-token: ${{ secrets.DELETE_PACKAGES_TOKEN }}
 ```

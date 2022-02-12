@@ -1,16 +1,41 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import {getOctokit} from '@actions/github'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    const token = core.getInput('github-token', {required: true})
+    const packageName = core.getInput('package-name')
+    const personalAccount = core.getInput('personal-account')
+    const repository = core.getInput('repository')
+    const github = getOctokit(token)
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    const accountType = personalAccount ? 'users' : 'orgs'
+    const [owner, repo] = repository.split('/')
+    const pkg = packageName || repo
+    const getUrl = `GET /${accountType}/${owner}/packages/container/${pkg}/versions`
 
-    core.setOutput('time', new Date().toTimeString())
+    const {data: versions} = await github.request(getUrl)
+    core.info(`found versions: ${versions}`)
+
+    for (const version of versions) {
+      const {metadata} = version
+      const {container} = metadata
+      const {tags} = container
+      const {id} = version
+
+      if (!tags.length) {
+        try {
+          const delUrl = `DELETE /${accountType}/${owner}/packages/container/${pkg}/versions/${id}`
+          await github.request(delUrl)
+          core.info(
+            `successfully deleted untagged image version: ${pkg} (${id})`
+          )
+        } catch (error) {
+          core.info(`failed to delete untagged image version: ${pkg} (${id})`)
+          core.setFailed((error as Error).message)
+        }
+      }
+    }
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }

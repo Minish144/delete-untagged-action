@@ -15,8 +15,8 @@ async function run(): Promise<void> {
     const getUrl = `GET /${accountType}/${owner}/packages/container/${pkg}/versions`
 
     const {data: versions} = await github.request(getUrl)
-    core.info(`found versions: ${versions}`)
 
+    const delRequests: Promise<unknown>[] = []
     for (const version of versions) {
       const {metadata} = version
       const {container} = metadata
@@ -24,17 +24,16 @@ async function run(): Promise<void> {
       const {id} = version
 
       if (!tags.length) {
-        try {
-          const delUrl = `DELETE /${accountType}/${owner}/packages/container/${pkg}/versions/${id}`
-          await github.request(delUrl)
-          core.info(
-            `successfully deleted untagged image version: ${pkg} (${id})`
-          )
-        } catch (error) {
-          core.info(`failed to delete untagged image version: ${pkg} (${id})`)
-          core.setFailed((error as Error).message)
-        }
+        const delUrl = `DELETE /${accountType}/${owner}/packages/container/${pkg}/versions/${id}`
+        delRequests.push(github.request(delUrl))
       }
+    }
+    try {
+      await Promise.all(delRequests)
+      core.info(`successfully deleted untagged images`)
+    } catch (error) {
+      core.info(`failed to delete untagged images`)
+      core.setFailed((error as Error).message)
     }
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)

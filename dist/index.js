@@ -50,23 +50,24 @@ function run() {
             const pkg = packageName || repo;
             const getUrl = `GET /${accountType}/${owner}/packages/container/${pkg}/versions`;
             const { data: versions } = yield github.request(getUrl);
-            core.info(`found versions: ${versions}`);
+            const delRequests = [];
             for (const version of versions) {
                 const { metadata } = version;
                 const { container } = metadata;
                 const { tags } = container;
                 const { id } = version;
                 if (!tags.length) {
-                    try {
-                        const delUrl = `DELETE /${accountType}/${owner}/packages/container/${pkg}/versions/${id}`;
-                        yield github.request(delUrl);
-                        core.info(`successfully deleted untagged image version: ${pkg} (${id})`);
-                    }
-                    catch (error) {
-                        core.info(`failed to delete untagged image version: ${pkg} (${id})`);
-                        core.setFailed(error.message);
-                    }
+                    const delUrl = `DELETE /${accountType}/${owner}/packages/container/${pkg}/versions/${id}`;
+                    delRequests.push(github.request(delUrl));
                 }
+            }
+            try {
+                yield Promise.all(delRequests);
+                core.info(`successfully deleted untagged images`);
+            }
+            catch (error) {
+                core.info(`failed to delete untagged images`);
+                core.setFailed(error.message);
             }
         }
         catch (error) {

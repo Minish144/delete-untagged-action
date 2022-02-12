@@ -34,6 +34,7 @@ The owner and repository name. For example, `Codertocat/Hello-World`. Defaults t
 
 The following references were used for building this action:
 
+1. ["Delete Untagged Action" by camargo](https://github.com/camargo/delete-untagged-action)
 1. [GitHub REST API - Delete a package for an organization](https://docs.github.com/en/rest/reference/packages#delete-a-package-for-an-organization)
 1. [GitHub REST API - Delete a package for a user](https://docs.github.com/en/rest/reference/packages#delete-a-package-for-a-user)
 1. [Permissions for the GITHUB_TOKEN][github-token-permissions]
